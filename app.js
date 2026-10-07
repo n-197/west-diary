@@ -636,7 +636,9 @@ async function exportEntries() {
     showDataMessage('書き出す日記がありません。');
     return;
   }
-  const data = JSON.stringify({ app: 'west-diary', version: 1, exportedAt: new Date().toISOString(), entries: state.entries }, null, 2);
+  // version 2 から配色・背景の写真（settings）も含める
+  const settings = await WestTheme.exportSettings();
+  const data = JSON.stringify({ app: 'west-diary', version: 2, exportedAt: new Date().toISOString(), entries: state.entries, settings }, null, 2);
   const filename = `west-diary-${todayString()}.json`;
   const file = new File([data], filename, { type: 'application/json' });
 
@@ -728,9 +730,112 @@ async function importEntries(file) {
   const parts = [`${added} 件を追加しました`];
   if (updated) parts.push(`${updated} 件を更新しました`);
   if (skipped) parts.push(`${skipped} 件は内容が不完全なため読み込みませんでした`);
+  if (parsed && parsed.settings && await WestTheme.importSettings(parsed.settings)) parts.push('配色・背景も読み込みました');
   showDataMessage(`${parts.join('。')}。`);
   render();
   updateBackupStatus();
+}
+
+/* ---------- 配色・背景の設定 ---------- */
+const settingsEls = {
+  dialog: $('settings'), open: $('settings-btn'), presets: $('preset-list'), accent: $('accent-input'),
+  bgColor: $('bg-color-input'), gradA: $('bg-grad-a'), gradB: $('bg-grad-b'),
+  bgPreview: $('bg-preview'), bgPick: $('bg-pick'), bgRemove: $('bg-remove'), bgFile: $('bg-file'),
+  bgFade: $('bg-fade'), bgFadeRow: $('bg-fade-row'), bgError: $('bg-error'), reset: $('theme-reset'),
+};
+
+function renderPresets() {
+  const current = WestTheme.get();
+  settingsEls.presets.replaceChildren(...WestTheme.PRESETS.map((p) => {
+    const b = createButton('', 'swatch', () => { WestTheme.applyPreset(p.id); syncSettingsForm(); });
+    const dot = el('span', 'swatch-dot');
+    // 標準は今の配色の見本、モノクロは黒白の半分ずつ
+    dot.style.background = p.id === 'default' ? 'linear-gradient(135deg, #e0434f 50%, #f4f5f9 50%)'
+      : p.id === 'mono' ? 'linear-gradient(135deg, #1d1d1f 50%, #ffffff 50%)' : p.accent;
+    b.append(dot, el('span', '', p.label));
+    b.setAttribute('aria-pressed', String(current.preset === p.id));
+    return b;
+  }));
+}
+
+// 設定パネルの入力欄を今の設定にそろえる
+function syncSettingsForm() {
+  const s = WestTheme.get();
+  renderPresets();
+  settingsEls.accent.value = WestTheme.currentAccent();
+  document.querySelectorAll('input[name="mode"]').forEach((r) => { r.checked = r.value === s.mode; });
+  document.querySelectorAll('input[name="bg"]').forEach((r) => { r.checked = r.value === s.bg; });
+  document.querySelectorAll('[data-bg-panel]').forEach((p) => { p.hidden = p.dataset.bgPanel !== s.bg; });
+  settingsEls.bgColor.value = s.bgColor;
+  [settingsEls.gradA.value, settingsEls.gradB.value] = s.bgGradient;
+  settingsEls.bgFade.value = String(s.bgFade);
+  const hasImage = WestTheme.hasBackground();
+  const layer = $('bg-layer');
+  settingsEls.bgPreview.hidden = !hasImage;
+  settingsEls.bgPreview.style.backgroundImage = hasImage ? layer.style.backgroundImage : '';
+  settingsEls.bgRemove.hidden = !hasImage;
+  settingsEls.bgFadeRow.hidden = !hasImage;
+  settingsEls.bgPick.textContent = hasImage ? '別の写真にする' : '写真を選ぶ';
+}
+
+function showBgError(message) {
+  settingsEls.bgError.textContent = message;
+  settingsEls.bgError.hidden = !message;
+}
+
+function setupSettings() {
+  settingsEls.open.addEventListener('click', () => {
+    showBgError('');
+    syncSettingsForm();
+    settingsEls.dialog.showModal();
+  });
+  settingsEls.dialog.querySelectorAll('[data-close]').forEach((b) => b.addEventListener('click', () => settingsEls.dialog.close()));
+  // パネルの外側（暗い部分）を押しても閉じる
+  settingsEls.dialog.addEventListener('click', (e) => { if (e.target === settingsEls.dialog) settingsEls.dialog.close(); });
+
+  settingsEls.accent.addEventListener('input', () => { WestTheme.update({ preset: 'custom', accent: settingsEls.accent.value }); renderPresets(); });
+  document.querySelectorAll('input[name="mode"]').forEach((r) => r.addEventListener('change', () => {
+    WestTheme.update({ mode: r.value });
+    syncSettingsForm();
+  }));
+  document.querySelectorAll('input[name="bg"]').forEach((r) => r.addEventListener('change', () => {
+    showBgError('');
+    // 写真がまだなければ、写真を選ぶまで背景は変えない
+    if (r.value !== 'image' || WestTheme.hasBackground()) WestTheme.update({ bg: r.value });
+    syncSettingsForm();
+    if (r.value === 'image') {
+      document.querySelectorAll('[data-bg-panel]').forEach((p) => { p.hidden = p.dataset.bgPanel !== 'image'; });
+      r.checked = true;
+    }
+  }));
+  settingsEls.bgColor.addEventListener('input', () => WestTheme.update({ bg: 'color', bgColor: settingsEls.bgColor.value }));
+  [settingsEls.gradA, settingsEls.gradB].forEach((input) => input.addEventListener('input', () => {
+    WestTheme.update({ bg: 'gradient', bgGradient: [settingsEls.gradA.value, settingsEls.gradB.value] });
+  }));
+  settingsEls.bgFade.addEventListener('input', () => WestTheme.update({ bgFade: Number(settingsEls.bgFade.value) }));
+  settingsEls.bgPick.addEventListener('click', () => settingsEls.bgFile.click());
+  settingsEls.bgFile.addEventListener('change', async () => {
+    const file = settingsEls.bgFile.files && settingsEls.bgFile.files[0];
+    settingsEls.bgFile.value = '';
+    if (!file) return;
+    showBgError('');
+    settingsEls.bgPick.disabled = true;
+    settingsEls.bgPick.textContent = '読み込み中…';
+    try {
+      await WestTheme.saveBackground(file);
+    } catch (e) {
+      console.error(e);
+      showBgError('この写真は使えませんでした。別の写真（JPEG や PNG）をお試しください。');
+    } finally {
+      settingsEls.bgPick.disabled = false;
+      syncSettingsForm();
+    }
+  });
+  settingsEls.bgRemove.addEventListener('click', async () => {
+    await WestTheme.clearBackground();
+    syncSettingsForm();
+  });
+  settingsEls.reset.addEventListener('click', () => { WestTheme.reset(); syncSettingsForm(); });
 }
 
 /* ---------- いちばん上へ戻る ---------- */
@@ -781,6 +886,8 @@ try {
 setView(state.view);
 updateBackupStatus();
 loadCatalog();
+setupSettings();
+WestTheme.loadBackground();
 
 // ブラウザに日記を勝手に消されないよう、永続保存をお願いしておく
 if (navigator.storage && navigator.storage.persist) {

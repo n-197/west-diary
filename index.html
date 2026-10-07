@@ -18,11 +18,18 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&display=swap">
   <link rel="stylesheet" href="style.css">
+  <script src="theme.js"></script>
 </head>
 <body>
+  <div id="bg-layer" aria-hidden="true"></div>
   <header class="site-header">
-    <h1 class="site-title">WEST. 音楽日記</h1>
-    <p class="site-subtitle">今日聴いた WEST. の曲と一緒に、日々を残そう</p>
+    <div class="site-heading">
+      <h1 class="site-title">WEST. 音楽日記</h1>
+      <p class="site-subtitle">今日聴いた WEST. の曲と一緒に、日々を残そう</p>
+    </div>
+    <button type="button" id="settings-btn" class="settings-btn" aria-label="配色・背景の設定" title="配色・背景の設定">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    </button>
   </header>
 
   <div class="notice-wrap"><p id="notice" class="notice" role="status" hidden></p></div>
@@ -102,6 +109,67 @@
   </main>
   <button type="button" id="to-top" class="to-top" aria-label="いちばん上へ戻る" title="いちばん上へ戻る" tabindex="-1">↑</button>
   <audio id="player" preload="none"></audio>
+
+  <dialog id="settings" class="settings-dialog" aria-labelledby="settings-heading">
+    <div class="settings-head">
+      <h2 id="settings-heading" tabindex="-1" autofocus>配色・背景</h2>
+      <button type="button" class="btn btn-small" data-close>閉じる</button>
+    </div>
+    <div class="settings-body">
+      <section class="settings-section">
+        <h3>プリセット</h3>
+        <div id="preset-list" class="swatches"></div>
+      </section>
+
+      <section class="settings-section">
+        <h3>テーマカラー</h3>
+        <label class="color-row"><input type="color" id="accent-input"> 好きな色を選ぶ</label>
+        <p class="settings-note">ボタンや選択中のタブなどの色です。文字が読みにくい色は、自動で読みやすい明るさに調整します。</p>
+      </section>
+
+      <section class="settings-section">
+        <h3>表示モード</h3>
+        <div class="segmented" role="radiogroup" aria-label="表示モード">
+          <label><input type="radio" name="mode" value="auto"><span>端末に合わせる</span></label>
+          <label><input type="radio" name="mode" value="light"><span>ライト</span></label>
+          <label><input type="radio" name="mode" value="dark"><span>ダーク</span></label>
+        </div>
+      </section>
+
+      <section class="settings-section">
+        <h3>背景</h3>
+        <div class="segmented is-wrap" role="radiogroup" aria-label="背景">
+          <label><input type="radio" name="bg" value="default"><span>標準</span></label>
+          <label><input type="radio" name="bg" value="tint"><span>テーマカラー</span></label>
+          <label><input type="radio" name="bg" value="color"><span>単色</span></label>
+          <label><input type="radio" name="bg" value="gradient"><span>グラデーション</span></label>
+          <label><input type="radio" name="bg" value="image"><span>写真</span></label>
+        </div>
+        <div class="bg-options" data-bg-panel="color" hidden>
+          <label class="color-row"><input type="color" id="bg-color-input"> 背景の色</label>
+        </div>
+        <div class="bg-options" data-bg-panel="gradient" hidden>
+          <label class="color-row"><input type="color" id="bg-grad-a"> 上の色</label>
+          <label class="color-row"><input type="color" id="bg-grad-b"> 下の色</label>
+        </div>
+        <div class="bg-options" data-bg-panel="image" hidden>
+          <div id="bg-preview" class="bg-preview" hidden></div>
+          <div class="data-actions">
+            <button type="button" id="bg-pick" class="btn btn-small">写真を選ぶ</button>
+            <button type="button" id="bg-remove" class="btn btn-small btn-danger" hidden>写真を削除</button>
+            <input type="file" id="bg-file" accept="image/*" hidden>
+          </div>
+          <label class="range-row" id="bg-fade-row">写真を薄く <input type="range" id="bg-fade" min="0" max="0.7" step="0.05"></label>
+          <p id="bg-error" class="settings-error" role="alert" hidden></p>
+        </div>
+      </section>
+      <p class="settings-note">配色と背景の写真は、「日記を書き出す」のファイルにも含まれます。</p>
+    </div>
+    <div class="settings-foot">
+      <button type="button" id="theme-reset" class="btn btn-small">標準に戻す</button>
+      <button type="button" class="btn btn-primary" data-close>完了</button>
+    </div>
+  </dialog>
 
   <script src="app.js"></script>
 </body>
