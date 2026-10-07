@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>WEST. 音楽日記</title>
+  <meta name="description" content="今日聴いた WEST. の曲と一緒に、日々を残す音楽日記">
+  <meta name="theme-color" content="#f4f5f9" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#12141b" media="(prefers-color-scheme: dark)">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="WEST.日記">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon-192.png" type="image/png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&display=swap">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="site-header">
+    <h1 class="site-title">WEST. 音楽日記</h1>
+    <p class="site-subtitle">今日聴いた WEST. の曲と一緒に、日々を残そう</p>
+  </header>
+
+  <div class="notice-wrap"><p id="notice" class="notice" role="status" hidden></p></div>
+
+  <main class="container">
+    <section class="panel form-panel" aria-labelledby="form-heading">
+      <h2 id="form-heading" class="panel-title">新しい日記</h2>
+      <form id="entry-form" novalidate>
+        <div class="form-row">
+          <label for="date">日付</label>
+          <input type="date" id="date" required>
+        </div>
+        <div class="form-row">
+          <label for="song">曲名</label>
+          <input type="text" id="song" list="song-options" maxlength="100" autocomplete="off" placeholder="例：ええじゃないか" required>
+          <datalist id="song-options"></datalist>
+        </div>
+        <div class="form-row">
+          <label for="album">作品名（アルバム / シングル）</label>
+          <input type="text" id="album" list="album-options" maxlength="100" autocomplete="off" placeholder="曲名を選ぶと自動で入ります" required>
+          <datalist id="album-options"></datalist>
+          <p id="album-hint" class="hint" aria-live="polite"></p>
+        </div>
+        <fieldset class="category-field">
+          <legend>種別</legend>
+          <label class="radio"><input type="radio" id="cat-album" name="category" value="album" checked> アルバム</label>
+          <label class="radio"><input type="radio" id="cat-single" name="category" value="single"> シングル</label>
+        </fieldset>
+        <div class="form-row">
+          <label for="lyric">好きな歌詞（任意）</label>
+          <textarea id="lyric" class="lyric-input" rows="2" maxlength="200" placeholder="心に残った一節を短く"></textarea>
+        </div>
+        <div class="form-row">
+          <label for="memo">日記・メモ</label>
+          <textarea id="memo" rows="4" maxlength="2000" placeholder="今日の出来事や、曲を聴いて感じたこと"></textarea>
+        </div>
+        <p id="form-error" class="form-error" role="alert" hidden></p>
+        <div class="form-actions">
+          <button type="submit" id="submit-btn" class="btn btn-primary">
+            <span class="btn-label">保存</span>
+          </button>
+          <button type="button" id="cancel-btn" class="btn btn-secondary" hidden>キャンセル</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="panel" aria-label="日記一覧">
+      <div class="tabs" role="tablist">
+        <button type="button" id="tab-timeline" class="tab is-active" role="tab" aria-selected="true" data-view="timeline">時系列</button>
+        <button type="button" id="tab-group" class="tab" role="tab" aria-selected="false" data-view="group">作品別</button>
+        <button type="button" id="tab-songs" class="tab" role="tab" aria-selected="false" data-view="songs">曲をさがす</button>
+      </div>
+      <div class="filters">
+        <input type="search" id="search" class="search-input" placeholder="曲名・作品名・歌詞・本文で検索" aria-label="キーワード検索">
+        <select id="category-filter" class="category-filter" aria-label="種別で絞り込み">
+          <option value="all">すべて</option>
+          <option value="album">アルバムのみ</option>
+          <option value="single">シングルのみ</option>
+        </select>
+      </div>
+      <p id="count" class="count" hidden></p>
+      <div id="entry-list" class="entry-list" aria-live="polite">
+        <div class="empty"><span class="empty-icon">♪</span><p>日記を読み込んでいます…</p></div>
+      </div>
+      <div class="data-panel">
+        <h2 class="data-title">バックアップ・引っ越し</h2>
+        <p class="data-note">日記はこの端末の中だけに保存されています。機種変更やもしものときのために、ときどき書き出しておきましょう。</p>
+        <div class="data-actions">
+          <button type="button" id="export-btn" class="btn btn-small">日記を書き出す</button>
+          <button type="button" id="import-btn" class="btn btn-small">日記を読み込む</button>
+          <input type="file" id="import-file" accept=".json,application/json" hidden>
+        </div>
+        <p id="backup-status" class="backup-status"></p>
+        <p id="data-message" class="data-message" role="status"></p>
+      </div>
+    </section>
+  </main>
+  <audio id="player" preload="none"></audio>
+
+  <script src="app.js"></script>
+</body>
+</html>

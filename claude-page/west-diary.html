@@ -1,0 +1,917 @@
+<title>WEST. 音楽日記</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&display=swap">
+<style>
+/* レイアウト: PC は左に入力フォーム・右に一覧の2カラム、狭い画面では1カラムに積む */
+:root {
+  --bg: #f4f5f9;
+  --surface: #ffffff;
+  --surface-alt: #eef0f6;
+  --border: #dfe2ec;
+  --text: #1d2130;
+  --text-muted: #646a7f;
+  --primary: #e0434f;
+  --primary-hover: #c9323e;
+  --primary-soft: #fde7e9;
+  --on-primary: #ffffff;
+  --album: #3466d6;
+  --album-soft: #e3ebfc;
+  --single: #b8700c;
+  --single-soft: #fcefd9;
+  --danger: #c22f2f;
+  --danger-soft: #fbe5e5;
+  --shadow: 0 2px 10px rgba(30, 30, 60, 0.06);
+  --placeholder-grad: linear-gradient(135deg, #e0434f 0%, #f29e4c 50%, #3466d6 100%);
+  --font-display: "Zen Maru Gothic", "Hiragino Maru Gothic ProN", "Hiragino Sans", sans-serif;
+  --font-body: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic UI", Meiryo, sans-serif;
+  --radius: 14px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #12141b; --surface: #1b1e28; --surface-alt: #252938; --border: #313648;
+    --text: #e9ebf2; --text-muted: #9ca2b6; --primary: #f0646e; --primary-hover: #f57f87;
+    --primary-soft: #3b2328; --on-primary: #1a0c0e; --album: #86a7f6; --album-soft: #22304f;
+    --single: #f0b05a; --single-soft: #3d2f1a; --danger: #f27a7a; --danger-soft: #3d2222;
+    --shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #12141b; --surface: #1b1e28; --surface-alt: #252938; --border: #313648;
+  --text: #e9ebf2; --text-muted: #9ca2b6; --primary: #f0646e; --primary-hover: #f57f87;
+  --primary-soft: #3b2328; --on-primary: #1a0c0e; --album: #86a7f6; --album-soft: #22304f;
+  --single: #f0b05a; --single-soft: #3d2f1a; --danger: #f27a7a; --danger-soft: #3d2222;
+  --shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.6;
+}
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}
+
+.site-header { padding: 24px 16px 4px; text-align: center; }
+.site-title { margin: 0; font-family: var(--font-display); font-weight: 700; font-size: 1.7rem; letter-spacing: 0.04em; }
+.site-subtitle { margin: 2px 0 0; color: var(--text-muted); font-size: 0.88rem; }
+
+.notice {
+  max-width: 1100px; margin: 12px auto 0; padding: 10px 14px;
+  border-radius: 10px; background: var(--danger-soft); color: var(--danger); font-size: 0.9rem;
+}
+.notice-wrap { padding: 0 16px; }
+
+.container {
+  max-width: 1100px; margin: 0 auto; padding: 16px;
+  display: grid; grid-template-columns: 340px minmax(0, 1fr); gap: 20px; align-items: start;
+}
+.panel {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  box-shadow: var(--shadow); padding: 20px; min-width: 0;
+}
+.form-panel { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 16px); }
+.form-panel.is-editing { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-soft); }
+.panel-title { margin: 0 0 14px; font-family: var(--font-display); font-size: 1.15rem; }
+
+/* フォーム */
+form { display: flex; flex-direction: column; gap: 14px; }
+.form-row { display: flex; flex-direction: column; gap: 6px; }
+.form-row > label, .category-field legend { font-size: 0.82rem; font-weight: 700; color: var(--text-muted); letter-spacing: 0.02em; }
+input[type="date"], input[type="text"], input[type="search"], textarea, select {
+  width: 100%; font: inherit; font-size: 16px; color: var(--text);
+  background: var(--surface-alt); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px;
+  transition: border-color .15s, box-shadow .15s;
+}
+input:focus, textarea:focus, select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-soft); }
+textarea { resize: vertical; min-height: 96px; }
+textarea.lyric-input { min-height: 60px; }
+/* iOS Safari の日付入力はネイティブ表示のままだと幅・高さが崩れるため揃える */
+input[type="date"] {
+  -webkit-appearance: none; appearance: none;
+  display: block; min-width: 0; max-width: 100%; min-height: 44px; line-height: 1.4;
+}
+input[type="date"]::-webkit-date-and-time-value { text-align: left; margin: 0; }
+.hint { margin: 0; font-size: 0.8rem; color: var(--text-muted); display: flex; align-items: center; gap: 8px; min-height: 1.2em; }
+.hint img { width: 28px; height: 28px; border-radius: 4px; flex-shrink: 0; }
+.hint.is-missing { color: var(--single); }
+.category-field { border: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 6px 18px; }
+.category-field legend { padding: 0; margin-bottom: 6px; }
+.radio { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
+.radio input { accent-color: var(--primary); width: 18px; height: 18px; margin: 0; }
+.form-error { margin: 0; color: var(--danger); font-size: 0.88rem; }
+.form-actions { display: flex; gap: 10px; }
+
+/* ボタン */
+.btn {
+  font: inherit; border: none; border-radius: 10px; padding: 10px 18px; cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px; transition: background .15s, opacity .15s;
+}
+.btn:focus-visible, .tab:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.btn-primary { flex: 1; background: var(--primary); color: var(--on-primary); font-weight: 700; }
+.btn-primary:hover:not(:disabled) { background: var(--primary-hover); }
+.btn:disabled { opacity: .6; cursor: not-allowed; }
+.btn-secondary { background: var(--surface-alt); color: var(--text); border: 1px solid var(--border); }
+.btn-small { padding: 4px 12px; font-size: 0.82rem; background: transparent; border: 1px solid var(--border); color: var(--text-muted); }
+.btn-small:hover { color: var(--text); background: var(--surface-alt); }
+.btn-danger:hover { color: var(--danger); border-color: var(--danger); }
+.btn-danger-solid { padding: 4px 12px; font-size: 0.82rem; background: var(--danger); color: var(--surface); font-weight: 700; }
+.spinner {
+  display: none; width: 16px; height: 16px; border: 2px solid currentColor; border-right-color: transparent;
+  border-radius: 50%; animation: spin .8s linear infinite;
+}
+.is-loading .spinner { display: inline-block; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* タブ・フィルター */
+.tabs { display: flex; gap: 4px; padding: 4px; background: var(--surface-alt); border-radius: 12px; margin-bottom: 14px; }
+.tab {
+  flex: 1; font: inherit; font-weight: 700; padding: 8px; border: none; border-radius: 9px;
+  background: transparent; color: var(--text-muted); cursor: pointer;
+}
+.tab.is-active { background: var(--surface); color: var(--text); box-shadow: var(--shadow); }
+.filters { display: flex; gap: 10px; margin-bottom: 16px; }
+.search-input { flex: 1; min-width: 0; }
+.category-filter { width: auto; flex-shrink: 0; }
+.export-row { margin-top: 20px; padding-top: 14px; border-top: 1px solid var(--border); display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.export-status { margin: 0; font-size: 0.8rem; color: var(--text-muted); }
+.count { margin: -6px 0 12px; font-size: 0.8rem; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+
+/* カード */
+.entry-list { display: flex; flex-direction: column; gap: 14px; }
+.card { display: flex; gap: 16px; padding: 14px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
+.card.is-editing { border-color: var(--primary); background: var(--primary-soft); }
+.artwork {
+  flex-shrink: 0; width: 96px; height: 96px; border-radius: 10px; overflow: hidden;
+  background: var(--placeholder-grad); display: flex; align-items: center; justify-content: center;
+  color: #ffffff; font-size: 2rem;
+}
+.artwork img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.card-body { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.card-meta { display: flex; align-items: center; gap: 8px; font-size: 0.82rem; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+.badge { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 0.74rem; font-weight: 700; }
+.badge-album { color: var(--album); background: var(--album-soft); }
+.badge-single { color: var(--single); background: var(--single-soft); }
+.card-song { margin: 4px 0 0; font-size: 1.05rem; font-weight: 700; overflow-wrap: anywhere; }
+.card-album { margin: 0; font-size: 0.86rem; color: var(--text-muted); overflow-wrap: anywhere; }
+.card-lyric {
+  margin: 8px 0 0; padding: 2px 0 2px 10px; border-left: 3px solid var(--primary);
+  color: var(--text-muted); font-style: italic; white-space: pre-wrap; overflow-wrap: anywhere;
+}
+.card-memo { margin: 8px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.card-actions { margin-top: 10px; display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 8px; }
+a.btn-small { text-decoration: none; }
+.actions-gap { flex: 1; }
+.btn-write { color: var(--primary); border-color: var(--primary); }
+
+/* 曲をさがす */
+.song-row { display: flex; gap: 12px; align-items: center; padding: 10px 12px; border: 1px solid var(--border); border-radius: 12px; }
+.song-row .artwork { width: 56px; height: 56px; font-size: 1.3rem; }
+.song-main { flex: 1; min-width: 0; }
+.song-title { margin: 0; font-weight: 700; overflow-wrap: anywhere; }
+.song-sub { margin: 0; font-size: 0.8rem; color: var(--text-muted); display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-variant-numeric: tabular-nums; }
+.recorded { color: var(--primary); font-weight: 700; }
+.song-row .card-actions { margin-top: 6px; justify-content: flex-start; }
+.confirm-text { font-size: 0.82rem; color: var(--danger); margin-right: auto; }
+
+/* 作品別 */
+.group { display: flex; flex-direction: column; gap: 10px; }
+.group + .group { margin-top: 12px; }
+.group-header { display: flex; align-items: center; gap: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+.group-header .artwork { width: 56px; height: 56px; font-size: 1.3rem; }
+.group-info { min-width: 0; }
+.group-title { margin: 0; font-family: var(--font-display); font-size: 1.08rem; overflow-wrap: anywhere; text-wrap: balance; }
+.group-sub { margin: 0; font-size: 0.8rem; color: var(--text-muted); display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-variant-numeric: tabular-nums; }
+
+.empty { text-align: center; color: var(--text-muted); padding: 40px 16px; }
+.empty-icon { font-size: 2rem; display: block; margin-bottom: 4px; }
+.empty p { margin: 0; }
+
+@media (max-width: 820px) {
+  .container { grid-template-columns: minmax(0, 1fr); }
+  .form-panel { position: static; }
+}
+@media (max-width: 480px) {
+  .container { padding: 12px 16px; gap: 14px; }
+  .panel { padding: 16px; }
+  .filters { flex-direction: column; }
+  .category-filter { width: 100%; }
+  .card { gap: 12px; padding: 12px; }
+  .card .artwork { width: 72px; height: 72px; font-size: 1.6rem; }
+  /* 外部リンクのボタンと、編集・削除を別の行に分ける */
+  .card-actions { justify-content: flex-start; gap: 6px; }
+  .actions-gap { flex-basis: 100%; height: 0; }
+  .card-actions .btn-small { padding: 4px 10px; }
+  .song-row { align-items: flex-start; }
+  .song-row .artwork { width: 48px; height: 48px; }
+}
+</style>
+
+<header class="site-header">
+  <h1 class="site-title">WEST. 音楽日記</h1>
+  <p class="site-subtitle">今日聴いた WEST. の曲と一緒に、日々を残そう</p>
+</header>
+
+<div class="notice-wrap"><p id="notice" class="notice" role="status" hidden></p></div>
+
+<main class="container">
+  <section class="panel form-panel" aria-labelledby="form-heading">
+    <h2 id="form-heading" class="panel-title">新しい日記</h2>
+    <form id="entry-form" novalidate>
+      <div class="form-row">
+        <label for="date">日付</label>
+        <input type="date" id="date" required>
+      </div>
+      <div class="form-row">
+        <label for="song">曲名</label>
+        <input type="text" id="song" list="song-options" maxlength="100" autocomplete="off" placeholder="例：ええじゃないか" required>
+        <datalist id="song-options"></datalist>
+      </div>
+      <div class="form-row">
+        <label for="album">作品名（アルバム / シングル）</label>
+        <input type="text" id="album" list="album-options" maxlength="100" autocomplete="off" placeholder="曲名を選ぶと自動で入ります" required>
+        <datalist id="album-options"></datalist>
+        <p id="album-hint" class="hint" aria-live="polite"></p>
+      </div>
+      <fieldset class="category-field">
+        <legend>種別</legend>
+        <label class="radio"><input type="radio" id="cat-album" name="category" value="album" checked> アルバム</label>
+        <label class="radio"><input type="radio" id="cat-single" name="category" value="single"> シングル</label>
+      </fieldset>
+      <div class="form-row">
+        <label for="lyric">好きな歌詞（任意）</label>
+        <textarea id="lyric" class="lyric-input" rows="2" maxlength="200" placeholder="心に残った一節を短く"></textarea>
+      </div>
+      <div class="form-row">
+        <label for="memo">日記・メモ</label>
+        <textarea id="memo" rows="4" maxlength="2000" placeholder="今日の出来事や、曲を聴いて感じたこと"></textarea>
+      </div>
+      <p id="form-error" class="form-error" role="alert" hidden></p>
+      <div class="form-actions">
+        <button type="submit" id="submit-btn" class="btn btn-primary" disabled>
+          <span class="spinner" aria-hidden="true"></span>
+          <span class="btn-label">保存</span>
+        </button>
+        <button type="button" id="cancel-btn" class="btn btn-secondary" hidden>キャンセル</button>
+      </div>
+    </form>
+  </section>
+
+  <section class="panel" aria-label="日記一覧">
+    <div class="tabs" role="tablist">
+      <button type="button" id="tab-timeline" class="tab is-active" role="tab" aria-selected="true" data-view="timeline">時系列</button>
+      <button type="button" id="tab-group" class="tab" role="tab" aria-selected="false" data-view="group">作品別</button>
+      <button type="button" id="tab-songs" class="tab" role="tab" aria-selected="false" data-view="songs">曲をさがす</button>
+    </div>
+    <div class="filters">
+      <input type="search" id="search" class="search-input" placeholder="曲名・作品名・歌詞・本文で検索" aria-label="キーワード検索">
+      <select id="category-filter" class="category-filter" aria-label="種別で絞り込み">
+        <option value="all">すべて</option>
+        <option value="album">アルバムのみ</option>
+        <option value="single">シングルのみ</option>
+      </select>
+    </div>
+    <p id="count" class="count" hidden></p>
+    <div id="entry-list" class="entry-list" aria-live="polite">
+      <div class="empty"><span class="empty-icon">♪</span><p>日記を読み込んでいます…</p></div>
+    </div>
+    <div class="export-row" id="export-row" hidden>
+      <button type="button" id="export-btn" class="btn btn-small">日記を書き出す（アプリへの引っ越し用）</button>
+      <p id="export-status" class="export-status" role="status"></p>
+    </div>
+  </section>
+</main>
+
+<script>
+'use strict';
+
+const state = {
+  catalog: [],        // WEST. の作品カタログ（catalog.json）
+  catalogLoaded: false,
+  entries: [],        // 日記（claude.ai の自分専用領域から購読）
+  loaded: false,
+  view: 'timeline',   // 'timeline' | 'group' | 'songs'
+  keyword: '',        // 日記の検索語
+  songKeyword: '',    // 曲をさがす の検索語
+  category: 'all',
+  editingId: null,
+  confirmingId: null,
+  saving: false,
+};
+let entriesRef = null;  // 日記コレクションへの参照（使えないときは null）
+
+const $ = (id) => document.getElementById(id);
+const els = {
+  form: $('entry-form'), formPanel: document.querySelector('.form-panel'), formHeading: $('form-heading'),
+  date: $('date'), song: $('song'), album: $('album'), lyric: $('lyric'), memo: $('memo'),
+  songOptions: $('song-options'), albumOptions: $('album-options'), albumHint: $('album-hint'),
+  formError: $('form-error'), submitBtn: $('submit-btn'), submitLabel: document.querySelector('#submit-btn .btn-label'),
+  cancelBtn: $('cancel-btn'), tabs: document.querySelectorAll('.tab'), search: $('search'),
+  categoryFilter: $('category-filter'), list: $('entry-list'), count: $('count'), notice: $('notice'),
+};
+
+/* ---------- ユーティリティ ---------- */
+function todayString() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+function normalize(str) {
+  return String(str || '').normalize('NFKC').toLowerCase().replace(/\s+/g, '');
+}
+function formatDate(ymd) {
+  return /^\d{4}-\d{2}-\d{2}$/.test(ymd || '') ? ymd.replace(/-/g, '.') : (ymd || '');
+}
+function el(tag, className, text) {
+  const node = document.createElement(tag);
+  if (className) node.className = className;
+  if (text !== undefined) node.textContent = text; // XSS 対策：常に textContent で挿入
+  return node;
+}
+function showNotice(message) {
+  els.notice.textContent = message;
+  els.notice.hidden = !message;
+}
+
+/* ---------- カタログ ---------- */
+const workById = (id) => state.catalog.find((w) => w.id === id) || null;
+
+// 入力された作品名をカタログの作品に対応づける（完全一致 → 部分一致）
+function findWork(albumName) {
+  const n = normalize(albumName);
+  if (!n) return null;
+  return state.catalog.find((w) => normalize(w.name) === n)
+    || state.catalog.find((w) => normalize(w.name).includes(n) || n.includes(normalize(w.name)))
+    || null;
+}
+
+// その曲を収録した作品のうち、最初に発売されたもの
+function firstWorkWithSong(song) {
+  const n = normalize(song);
+  if (!n) return null;
+  return state.catalog.find((w) => w.songs.some((s) => normalize(s) === n)) || null;
+}
+
+function fillOptions(datalist, values) {
+  datalist.replaceChildren(...values.map((v) => { const o = document.createElement('option'); o.value = v; return o; }));
+}
+
+function refreshSongOptions() {
+  const work = findWork(els.album.value);
+  const songs = work ? work.songs : [...new Set(state.catalog.flatMap((w) => w.songs))];
+  fillOptions(els.songOptions, songs);
+}
+
+function updateAlbumHint() {
+  const hint = els.albumHint;
+  hint.replaceChildren();
+  hint.classList.remove('is-missing');
+  if (!els.album.value.trim() || state.catalog.length === 0) return;
+  const work = findWork(els.album.value);
+  if (work) {
+    const img = document.createElement('img');
+    img.src = work.artwork; img.alt = '';
+    hint.append(img, `${work.name}（${formatDate(work.releaseDate)} 発売）`);
+  } else {
+    hint.classList.add('is-missing');
+    hint.textContent = 'カタログにない作品です。ジャケットなし・発売日不明で保存されます。';
+  }
+}
+
+function setCategoryValue(value) {
+  $(value === 'single' ? 'cat-single' : 'cat-album').checked = true;
+}
+function getCategoryValue() {
+  return $('cat-single').checked ? 'single' : 'album';
+}
+
+function onAlbumChanged() {
+  const work = findWork(els.album.value);
+  if (work && normalize(work.name) === normalize(els.album.value)) setCategoryValue(work.category);
+  updateAlbumHint();
+  refreshSongOptions();
+}
+
+function onSongChanged() {
+  if (els.album.value.trim()) return;
+  const work = firstWorkWithSong(els.song.value);
+  if (work) {
+    els.album.value = work.name;
+    onAlbumChanged();
+  }
+}
+
+async function loadCatalog() {
+  try {
+    const res = await fetch('catalog.json');
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    state.catalog = (data.works || []).slice().sort((a, b) => a.releaseDate.localeCompare(b.releaseDate));
+  } catch (e) {
+    console.warn('カタログの読み込みに失敗しました', e);
+    state.catalog = [];
+  }
+  state.catalogLoaded = true;
+  fillOptions(els.albumOptions, state.catalog.map((w) => w.name));
+  refreshSongOptions();
+  updateAlbumHint();
+  render();
+}
+
+/* ---------- 保存先（claude.ai の自分専用領域） ---------- */
+async function connectStore() {
+  const [db, user] = await Promise.all([window.claude.use('db'), window.claude.use('user')]);
+  const uid = user ? await user.id() : null;
+  if (!db || !uid) {
+    state.loaded = true;
+    showNotice('日記を保存するには、claude.ai にログインした状態でこのページを開いてください。');
+    render();
+    return;
+  }
+  entriesRef = db.doc(`data/users/${uid}/diary`).collection('entries');
+  entriesRef.onSnapshot((snap) => {
+    state.entries = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    state.loaded = true;
+    if (state.editingId && !state.entries.some((e) => e.id === state.editingId)) resetForm();
+    updateSubmitState();
+    render();
+  }, (err) => {
+    console.error(err);
+    state.loaded = true;
+    showNotice('日記を読み込めませんでした。ページを再読み込みしてください。');
+    render();
+  });
+  updateSubmitState();
+}
+
+function writeErrorMessage(err) {
+  if (err && err.code === 'quota_exceeded') return '保存できる件数の上限に達しました。古い日記を削除してから保存してください。';
+  if (err && err.code === 'invalid_argument') return 'この日記は保存できませんでした。入力内容を確認してください。';
+  return '保存できませんでした。通信状況を確認して、もう一度お試しください。';
+}
+
+/* ---------- フォーム ---------- */
+function updateSubmitState() {
+  els.submitBtn.disabled = state.saving || !entriesRef;
+  els.cancelBtn.disabled = state.saving;
+  els.submitBtn.classList.toggle('is-loading', state.saving);
+  els.submitLabel.textContent = state.saving ? '保存中…' : (state.editingId ? '更新' : '保存');
+}
+
+function showFormError(message) {
+  els.formError.textContent = message;
+  els.formError.hidden = !message;
+}
+
+function resetForm() {
+  state.editingId = null;
+  els.form.reset();
+  els.date.value = todayString();
+  setCategoryValue('album');
+  showFormError('');
+  els.formHeading.textContent = '新しい日記';
+  els.cancelBtn.hidden = true;
+  els.formPanel.classList.remove('is-editing');
+  updateAlbumHint();
+  refreshSongOptions();
+  updateSubmitState();
+}
+
+function startEdit(id) {
+  const entry = state.entries.find((e) => e.id === id);
+  if (!entry) return;
+  state.editingId = id;
+  state.confirmingId = null;
+  els.date.value = entry.date;
+  els.song.value = entry.song;
+  els.album.value = entry.album;
+  els.lyric.value = entry.lyric || '';
+  els.memo.value = entry.memo || '';
+  setCategoryValue(entry.category);
+  showFormError('');
+  els.formHeading.textContent = '日記を編集';
+  els.cancelBtn.hidden = false;
+  els.formPanel.classList.add('is-editing');
+  updateAlbumHint();
+  refreshSongOptions();
+  updateSubmitState();
+  render();
+  els.formPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  els.song.focus({ preventScroll: true });
+}
+
+async function handleSubmit(event) {
+  event.preventDefault();
+  if (!entriesRef || state.saving) return;
+
+  const date = els.date.value;
+  const song = els.song.value.trim();
+  const album = els.album.value.trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return showFormError('日付を入力してください。');
+  if (!song) return showFormError('曲名を入力してください。');
+  if (!album) return showFormError('作品名を入力してください。');
+  showFormError('');
+
+  const now = new Date().toISOString();
+  const existing = state.editingId ? state.entries.find((e) => e.id === state.editingId) : null;
+  const work = findWork(album);
+  const body = {
+    date, song, album,
+    category: getCategoryValue(),
+    lyric: els.lyric.value.trim(),
+    memo: els.memo.value.trim(),
+    workId: work ? work.id : '',
+    createdAt: existing ? existing.createdAt : now,
+    updatedAt: now,
+  };
+
+  state.saving = true;
+  updateSubmitState();
+  try {
+    const ref = existing ? entriesRef.doc(existing.id) : entriesRef.doc();
+    await ref.set(body);
+    resetForm();
+  } catch (err) {
+    console.error(err);
+    showFormError(writeErrorMessage(err));
+  } finally {
+    state.saving = false;
+    updateSubmitState();
+  }
+}
+
+async function deleteEntry(id) {
+  if (!entriesRef) return;
+  try {
+    await entriesRef.doc(id).delete();
+    state.confirmingId = null;
+    if (state.editingId === id) resetForm();
+  } catch (err) {
+    console.error(err);
+    showNotice('削除できませんでした。もう一度お試しください。');
+  }
+  render();
+}
+
+/* ---------- 絞り込み・並び替え ---------- */
+function entryWork(e) {
+  return workById(e.workId) || findWork(e.album);
+}
+
+function getFilteredEntries() {
+  const kw = normalize(state.keyword);
+  return state.entries.filter((e) => {
+    if (state.category !== 'all' && e.category !== state.category) return false;
+    if (!kw) return true;
+    return [e.song, e.album, e.lyric, e.memo].some((v) => normalize(v).includes(kw));
+  });
+}
+
+function compareByDateDesc(a, b) {
+  if (a.date !== b.date) return a.date < b.date ? 1 : -1;
+  return (b.createdAt || '').localeCompare(a.createdAt || '');
+}
+
+// 作品ごとにまとめ、発売日の古い順に並べる（カタログにない作品は末尾に作品名順）
+function groupByWork(entries) {
+  const map = new Map();
+  entries.forEach((e) => {
+    const work = entryWork(e);
+    const key = work ? `w:${work.id}` : `a:${normalize(e.album)}`;
+    if (!map.has(key)) map.set(key, { work, album: work ? work.name : e.album, entries: [] });
+    map.get(key).entries.push(e);
+  });
+  const groups = [...map.values()];
+  groups.forEach((g) => g.entries.sort(compareByDateDesc));
+  groups.sort((a, b) => {
+    const ra = a.work ? a.work.releaseDate : '';
+    const rb = b.work ? b.work.releaseDate : '';
+    if (ra && rb && ra !== rb) return ra < rb ? -1 : 1;
+    if (ra && !rb) return -1;
+    if (!ra && rb) return 1;
+    return a.album.localeCompare(b.album, 'ja');
+  });
+  return groups;
+}
+
+/* ---------- 描画 ---------- */
+function createArtwork(work, alt) {
+  const box = el('div', 'artwork');
+  const placeholder = () => { box.textContent = '♪'; box.setAttribute('aria-hidden', 'true'); };
+  if (work && work.artwork) {
+    const img = document.createElement('img');
+    img.src = work.artwork;
+    img.alt = alt;
+    img.loading = 'lazy';
+    img.onerror = () => { img.remove(); placeholder(); };
+    box.appendChild(img);
+  } else {
+    placeholder();
+  }
+  return box;
+}
+
+function createBadge(category) {
+  const single = category === 'single';
+  return el('span', `badge ${single ? 'badge-single' : 'badge-album'}`, single ? 'シングル' : 'アルバム');
+}
+
+function createButton(label, className, onClick) {
+  const b = el('button', className, label);
+  b.type = 'button';
+  b.addEventListener('click', onClick);
+  return b;
+}
+
+function createLink(label, href, className = 'btn btn-small') {
+  const a = el('a', className, label);
+  a.href = href;
+  a.target = '_blank';
+  a.rel = 'noopener noreferrer';
+  return a;
+}
+
+// 歌詞は権利の都合でページに載せず、外部サイトで開く
+// 「〇〇 - From THE FIRST TAKE」「〇〇 (LIVE From …)」などの別バージョンは元の曲名で探す
+const baseTitle = (title) => title.replace(/\s+-\s+.*$/, '').replace(/\s*[(（][^()（）]*[)）]$/, '').trim() || title;
+const lyricsUrl = (title) => `https://www.uta-net.com/search/?Aselect=2&Bselect=3&Keyword=${encodeURIComponent(baseTitle(title))}`;
+const youtubeMusicUrl = (title) => `https://music.youtube.com/search?q=${encodeURIComponent(`WEST. ${title}`)}`;
+
+// YouTube Music・歌詞のボタン
+function createListenActions(title) {
+  return [
+    createLink('YouTube Music', youtubeMusicUrl(title)),
+    createLink('歌詞を見る', lyricsUrl(title)),
+  ];
+}
+
+function createCard(entry, { showAlbum = true } = {}) {
+  const card = el('article', 'card');
+  if (entry.id === state.editingId) card.classList.add('is-editing');
+  const work = entryWork(entry);
+  card.appendChild(createArtwork(work, `${entry.album} のジャケット`));
+
+  const body = el('div', 'card-body');
+  const meta = el('div', 'card-meta');
+  const time = el('time', '', formatDate(entry.date));
+  time.dateTime = entry.date;
+  meta.append(time, createBadge(entry.category));
+  body.appendChild(meta);
+  body.appendChild(el('h3', 'card-song', entry.song));
+  if (showAlbum) body.appendChild(el('p', 'card-album', entry.album));
+  if (entry.lyric) body.appendChild(el('blockquote', 'card-lyric', entry.lyric));
+  if (entry.memo) body.appendChild(el('p', 'card-memo', entry.memo));
+
+  const actions = el('div', 'card-actions');
+  if (state.confirmingId === entry.id) {
+    // ページ内で削除を確認する（ダイアログは使えないため）
+    actions.append(
+      el('span', 'confirm-text', 'この日記を削除しますか？'),
+      createButton('やめる', 'btn btn-small', () => { state.confirmingId = null; render(); }),
+      createButton('削除する', 'btn btn-danger-solid', () => deleteEntry(entry.id)),
+    );
+  } else {
+    const disabled = !entriesRef;
+    const editBtn = createButton('編集', 'btn btn-small', () => startEdit(entry.id));
+    const delBtn = createButton('削除', 'btn btn-small btn-danger', () => { state.confirmingId = entry.id; render(); });
+    editBtn.disabled = delBtn.disabled = disabled;
+    actions.append(...createListenActions(entry.song), el('span', 'actions-gap'), editBtn, delBtn);
+  }
+  body.appendChild(actions);
+  card.appendChild(body);
+  return card;
+}
+
+function createEmpty(message) {
+  const box = el('div', 'empty');
+  box.append(el('span', 'empty-icon', '♪'), el('p', '', message));
+  return box;
+}
+
+/* ---------- 曲をさがす ---------- */
+// 検索語に曲名または作品名が一致する { work, song } の一覧（発売順）
+function getSongMatches() {
+  const kw = normalize(state.songKeyword);
+  const rows = [];
+  state.catalog.forEach((work) => {
+    if (state.category !== 'all' && work.category !== state.category) return;
+    const workHit = kw && normalize(work.name).includes(kw);
+    work.songs.forEach((song) => {
+      if (!kw || workHit || normalize(song).includes(kw)) rows.push({ work, song });
+    });
+  });
+  return rows;
+}
+
+// 曲名ごとの日記の件数
+function countEntriesBySong() {
+  const counts = new Map();
+  state.entries.forEach((e) => {
+    const key = normalize(e.song);
+    counts.set(key, (counts.get(key) || 0) + 1);
+  });
+  return counts;
+}
+
+// 選んだ曲をフォームに入れる（編集中なら新規の日記に切り替える）
+function writeWithSong(work, song) {
+  if (state.editingId) resetForm();
+  els.song.value = song;
+  els.album.value = work.name;
+  onAlbumChanged();
+  setCategoryValue(work.category);
+  render();
+  els.formPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  els.memo.focus({ preventScroll: true });
+}
+
+function createGroupHeader(work, albumName, category, summary) {
+  const header = el('div', 'group-header');
+  header.appendChild(createArtwork(work, `${albumName} のジャケット`));
+  const info = el('div', 'group-info');
+  info.appendChild(el('h3', 'group-title', albumName));
+  const sub = el('p', 'group-sub');
+  sub.append(createBadge(category), summary);
+  info.appendChild(sub);
+  header.appendChild(info);
+  return header;
+}
+
+function createSongRow({ work, song }, counts, { showWork }) {
+  const row = el('article', 'song-row');
+  if (showWork) row.appendChild(createArtwork(work, `${work.name} のジャケット`));
+  const main = el('div', 'song-main');
+  main.appendChild(el('h4', 'song-title', song));
+  const sub = el('p', 'song-sub');
+  if (showWork) sub.append(createBadge(work.category), `${work.name} ・ ${formatDate(work.releaseDate)}`);
+  const n = counts.get(normalize(song)) || 0;
+  if (n > 0) sub.appendChild(el('span', 'recorded', `記録済み ${n} 回`));
+  if (sub.childNodes.length) main.appendChild(sub);
+  const actions = el('div', 'card-actions');
+  actions.append(
+    ...createListenActions(song),
+    createButton('この曲で日記を書く', 'btn btn-small btn-write', () => writeWithSong(work, song)),
+  );
+  main.appendChild(actions);
+  row.appendChild(main);
+  return row;
+}
+
+function renderSongs() {
+  if (!state.catalogLoaded) {
+    els.list.appendChild(createEmpty('曲の一覧を読み込んでいます…'));
+    return;
+  }
+  if (state.catalog.length === 0) {
+    els.list.appendChild(createEmpty('曲の一覧を読み込めませんでした。ページを再読み込みしてください。'));
+    return;
+  }
+  const rows = getSongMatches();
+  els.count.hidden = false;
+  els.count.textContent = `${rows.length} 曲`;
+  if (rows.length === 0) {
+    els.list.appendChild(createEmpty('条件に一致する曲が見つかりませんでした。'));
+    return;
+  }
+  const counts = countEntriesBySong();
+
+  // 検索語があれば曲を並べ、なければ作品ごとに見出しを付けて全曲を出す
+  if (normalize(state.songKeyword)) {
+    rows.forEach((r) => els.list.appendChild(createSongRow(r, counts, { showWork: true })));
+    return;
+  }
+  const byWork = new Map();
+  rows.forEach((r) => {
+    if (!byWork.has(r.work)) byWork.set(r.work, []);
+    byWork.get(r.work).push(r);
+  });
+  byWork.forEach((workRows, work) => {
+    const section = el('section', 'group');
+    section.appendChild(createGroupHeader(work, work.name, work.category,
+      `${formatDate(work.releaseDate)} 発売 ・ ${work.songs.length} 曲`));
+    workRows.forEach((r) => section.appendChild(createSongRow(r, counts, { showWork: false })));
+    els.list.appendChild(section);
+  });
+}
+
+function render() {
+  els.list.replaceChildren();
+  els.count.hidden = true;
+  if (state.view === 'songs') renderSongs();
+  else renderEntries();
+}
+
+function renderEntries() {
+  if (!state.loaded) {
+    els.list.appendChild(createEmpty('日記を読み込んでいます…'));
+    return;
+  }
+  if (state.entries.length === 0) {
+    els.list.appendChild(createEmpty('まだ日記がありません。左のフォームから最初の1曲を記録しましょう。'));
+    return;
+  }
+  const filtered = getFilteredEntries();
+  els.count.hidden = false;
+  els.count.textContent = filtered.length === state.entries.length
+    ? `全 ${state.entries.length} 件`
+    : `${filtered.length} 件 / 全 ${state.entries.length} 件`;
+  if (filtered.length === 0) {
+    els.list.appendChild(createEmpty('条件に一致する日記が見つかりませんでした。'));
+    return;
+  }
+
+  if (state.view === 'timeline') {
+    filtered.slice().sort(compareByDateDesc).forEach((e) => els.list.appendChild(createCard(e)));
+    return;
+  }
+
+  groupByWork(filtered).forEach((g) => {
+    const section = el('section', 'group');
+    section.appendChild(createGroupHeader(
+      g.work, g.album, g.work ? g.work.category : g.entries[0].category,
+      `${g.work ? formatDate(g.work.releaseDate) + ' 発売' : '発売日不明'} ・ ${g.entries.length} 件`,
+    ));
+    g.entries.forEach((e) => section.appendChild(createCard(e, { showAlbum: false })));
+    els.list.appendChild(section);
+  });
+}
+
+function setView(view) {
+  state.view = view;
+  els.tabs.forEach((tab) => {
+    const active = tab.dataset.view === view;
+    tab.classList.toggle('is-active', active);
+    tab.setAttribute('aria-selected', String(active));
+  });
+  // 検索窓は日記と曲で別々の検索語を持つ
+  const songs = view === 'songs';
+  els.search.value = songs ? state.songKeyword : state.keyword;
+  els.search.placeholder = songs ? '曲名・作品名で検索' : '曲名・作品名・歌詞・本文で検索';
+  els.search.setAttribute('aria-label', songs ? '曲を検索' : 'キーワード検索');
+  try { localStorage.setItem('west_diary_view', view); } catch (e) { /* 保存できなくても動作に影響なし */ }
+  render();
+}
+
+/* ---------- 初期化 ---------- */
+els.form.addEventListener('submit', handleSubmit);
+els.cancelBtn.addEventListener('click', () => { resetForm(); render(); });
+els.album.addEventListener('input', onAlbumChanged);
+els.song.addEventListener('change', onSongChanged);
+els.song.addEventListener('blur', onSongChanged);
+els.tabs.forEach((tab) => tab.addEventListener('click', () => setView(tab.dataset.view)));
+els.search.addEventListener('input', () => {
+  if (state.view === 'songs') state.songKeyword = els.search.value;
+  else state.keyword = els.search.value;
+  render();
+});
+els.categoryFilter.addEventListener('change', () => { state.category = els.categoryFilter.value; render(); });
+
+resetForm();
+try {
+  const saved = localStorage.getItem('west_diary_view');
+  if (['timeline', 'group', 'songs'].includes(saved)) setView(saved);
+} catch (e) { /* 既定の表示のまま */ }
+/* ---------- 書き出し（PWA 版への引っ越し用） ---------- */
+async function setupExport() {
+  const downloads = await window.claude.use('downloads');
+  if (!downloads) return;
+  const status = $('export-status');
+  $('export-row').hidden = false;
+  $('export-btn').addEventListener('click', async () => {
+    if (!entriesRef) {
+      status.textContent = 'ログインした状態で開くと書き出せます。';
+      return;
+    }
+    const entries = state.entries.map((e) => ({
+      id: e.id, date: e.date, song: e.song, album: e.album, category: e.category,
+      lyric: e.lyric || '', memo: e.memo || '', workId: e.workId || '',
+      createdAt: e.createdAt || '', updatedAt: e.updatedAt || '',
+    }));
+    const data = JSON.stringify({ app: 'west-diary', version: 1, exportedAt: new Date().toISOString(), entries }, null, 2);
+    try {
+      await downloads.save({ filename: `west-diary-${todayString()}.json`, data });
+      status.textContent = `${entries.length} 件の日記を書き出しました。`;
+    } catch (err) {
+      if (err && err.code === 'declined') status.textContent = '書き出しを取りやめました。';
+      else if (err && err.code === 'rate_limited') status.textContent = '少し待ってから、もう一度お試しください。';
+      else status.textContent = 'この画面では書き出せませんでした。';
+    }
+  });
+}
+
+loadCatalog();
+if (window.claude && typeof window.claude.use === 'function') {
+  connectStore();
+  setupExport();
+} else {
+  state.loaded = true;
+  showNotice('日記を保存するには、claude.ai にログインした状態でこのページを開いてください。');
+  render();
+}
+</script>

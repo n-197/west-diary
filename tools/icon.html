@@ -1,0 +1,15 @@
+<!doctype html>
+<!-- アプリのアイコン（黒背景に白で「▷WEST.」）。tools/build-icons.ps1 で PNG にする -->
+<html><head><meta charset="utf-8"><style>
+  html, body { margin: 0; width: 100vw; height: 100vh; background: #000; overflow: hidden; }
+  body { display: flex; align-items: center; justify-content: center; }
+  /* マスク可能アイコンの安全領域（中央 80%）に収まる大きさにする */
+  .mark { display: flex; align-items: center; gap: 2.4vw; color: #fff; }
+  svg { width: 13vw; height: 15vw; flex-shrink: 0; }
+  span { font: 800 16.5vw/1 "Segoe UI", "Helvetica Neue", Arial, sans-serif; letter-spacing: -0.02em; }
+</style></head><body>
+  <div class="mark">
+    <svg viewBox="0 0 26 30" aria-hidden="true"><polygon points="3,3 23,15 3,27" fill="none" stroke="#fff" stroke-width="3.2" stroke-linejoin="round"/></svg>
+    <span>WEST.</span>
+  </div>
+</body></html>
