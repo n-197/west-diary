@@ -209,12 +209,26 @@ a.btn-small { text-decoration: none; }
 .empty-icon { font-size: 2rem; display: block; margin-bottom: 4px; }
 .empty p { margin: 0; }
 
+/* いちばん上へ戻るボタン（スクロールすると右下に出る） */
+.to-top {
+  position: fixed; z-index: 20;
+  right: calc(16px + env(safe-area-inset-right, 0px)); bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  width: 48px; height: 48px; border: none; border-radius: 50%;
+  background: var(--primary); color: var(--on-primary); box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+  font: inherit; font-size: 1.3rem; font-weight: 700; line-height: 1; cursor: pointer;
+  opacity: 0; transform: translateY(12px); pointer-events: none; transition: opacity .2s, transform .2s;
+}
+.to-top.is-visible { opacity: 1; transform: none; pointer-events: auto; }
+.to-top:hover { background: var(--primary-hover); }
+.to-top:focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; }
+
 @media (max-width: 820px) {
   .container { grid-template-columns: minmax(0, 1fr); }
   .form-panel { position: static; }
 }
 @media (max-width: 480px) {
-  .container { padding: 12px 16px; gap: 14px; }
+  /* 最後のボタンが「上へ戻る」ボタンに隠れないよう下に余白を取る */
+  .container { padding: 12px 16px 80px; gap: 14px; }
   .panel { padding: 16px; }
   .filters { flex-direction: column; }
   .category-filter { width: 100%; }

@@ -25,7 +25,7 @@ const els = {
   formError: $('form-error'), submitBtn: $('submit-btn'), submitLabel: document.querySelector('#submit-btn .btn-label'),
   cancelBtn: $('cancel-btn'), tabs: document.querySelectorAll('.tab'), search: $('search'),
   categoryFilter: $('category-filter'), list: $('entry-list'), count: $('count'), notice: $('notice'),
-  exportBtn: $('export-btn'), importBtn: $('import-btn'), importFile: $('import-file'),
+  exportBtn: $('export-btn'), importBtn: $('import-btn'), importFile: $('import-file'), toTop: $('to-top'),
   backupStatus: $('backup-status'), dataMessage: $('data-message'),
 };
 
@@ -733,6 +733,20 @@ async function importEntries(file) {
   updateBackupStatus();
 }
 
+/* ---------- いちばん上へ戻る ---------- */
+const TO_TOP_THRESHOLD = 600;  // これ以上スクロールしたらボタンを出す（px）
+
+function updateToTop() {
+  const visible = window.scrollY > TO_TOP_THRESHOLD;
+  els.toTop.classList.toggle('is-visible', visible);
+  els.toTop.tabIndex = visible ? 0 : -1;
+}
+
+function scrollToTop() {
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  window.scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' });
+}
+
 /* ---------- 初期化 ---------- */
 els.form.addEventListener('submit', handleSubmit);
 els.cancelBtn.addEventListener('click', () => { resetForm(); render(); });
@@ -748,6 +762,8 @@ els.search.addEventListener('input', () => {
 els.categoryFilter.addEventListener('change', () => { state.category = els.categoryFilter.value; render(); });
 ['play', 'pause', 'ended', 'timeupdate'].forEach((type) => els.player.addEventListener(type, syncPlayButtons));
 els.player.addEventListener('error', () => onPreviewFailed(playingUrl));
+els.toTop.addEventListener('click', scrollToTop);
+window.addEventListener('scroll', updateToTop, { passive: true });
 els.exportBtn.addEventListener('click', exportEntries);
 els.importBtn.addEventListener('click', () => els.importFile.click());
 els.importFile.addEventListener('change', () => {
