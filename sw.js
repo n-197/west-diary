@@ -2,18 +2,20 @@
 
 // オフラインでも開けるように、アプリ本体・カタログ・ジャケット画像・フォントを端末に保存する。
 // アプリのファイルを変えて公開し直すときは VERSION を上げる。
-const VERSION = 'v5';
+const VERSION = 'v6';
 const APP_CACHE = `west-diary-app-${VERSION}`;
 const ASSET_CACHE = 'west-diary-assets';  // ジャケット画像・フォント（作品が変わらない限り使い回す）
 
 const APP_FILES = [
   './',
+  'noart/',
   'index.html',
   'style.css',
   'app.js',
   'theme.js',
   'catalog.json',
   'manifest.webmanifest',
+  'noart/manifest.webmanifest',
   'icons/icon-192.png',
   'icons/icon-512.png',
   'icons/apple-touch-icon.png',
@@ -49,7 +51,11 @@ async function staleWhileRevalidate(request, cacheName) {
   if (cached) return cached;
   const res = await network;
   if (res) return res;
-  if (request.mode === 'navigate') return (await cache.match('index.html')) || Response.error();
+  if (request.mode === 'navigate') {
+    // ジャケ写なし版（noart/）を開いたときは、ジャケ写なし版のページを返す
+    const page = new URL(request.url).pathname.includes('/noart/') ? 'noart/' : 'index.html';
+    return (await cache.match(page)) || Response.error();
+  }
   return Response.error();
 }
 

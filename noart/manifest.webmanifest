@@ -1,0 +1,16 @@
+{
+  "name": "WEST. 音楽日記",
+  "short_name": "WEST.日記",
+  "description": "今日聴いた WEST. の曲と一緒に、日々を残す音楽日記",
+  "lang": "ja",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#f4f5f9",
+  "icons": [
+    { "src": "../icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "../icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "../icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

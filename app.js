@@ -3,6 +3,8 @@
 const STORAGE_KEY = 'west_diary_entries';
 const BACKUP_KEY = 'west_diary_last_backup';
 const VIEW_KEY = 'west_diary_view';
+// ジャケ写なし版（noart/）は <html data-artwork="off"> でジャケット画像を出さない
+const SHOW_ARTWORK = document.documentElement.dataset.artwork !== 'off';
 const BACKUP_REMIND_DAYS = 30;
 
 const state = {
@@ -125,12 +127,15 @@ function updateAlbumHint() {
   if (!els.album.value.trim() || state.catalog.length === 0) return;
   const work = findWork(els.album.value);
   if (work) {
-    const img = document.createElement('img');
-    img.src = work.artwork; img.alt = '';
-    hint.append(img, `${work.name}（${formatDate(work.releaseDate)} 発売）`);
+    if (SHOW_ARTWORK) {
+      const img = document.createElement('img');
+      img.src = work.artwork; img.alt = '';
+      hint.appendChild(img);
+    }
+    hint.append(`${work.name}（${formatDate(work.releaseDate)} 発売）`);
   } else {
     hint.classList.add('is-missing');
-    hint.textContent = 'カタログにない作品です。ジャケットなし・発売日不明で保存されます。';
+    hint.textContent = `カタログにない作品です。${SHOW_ARTWORK ? 'ジャケットなし・' : ''}発売日不明で保存されます。`;
   }
 }
 
@@ -324,6 +329,11 @@ function createArtwork(work, alt) {
   return box;
 }
 
+// ジャケ写なし版では何も置かない
+function appendArtwork(parent, work, alt) {
+  if (SHOW_ARTWORK) parent.appendChild(createArtwork(work, alt));
+}
+
 function createBadge(category) {
   const single = category === 'single';
   return el('span', `badge ${single ? 'badge-single' : 'badge-album'}`, single ? 'シングル' : 'アルバム');
@@ -415,7 +425,7 @@ function createCard(entry, { showAlbum = true } = {}) {
   const card = el('article', 'card');
   if (entry.id === state.editingId) card.classList.add('is-editing');
   const work = entryWork(entry);
-  card.appendChild(createArtwork(work, `${entry.album} のジャケット`));
+  appendArtwork(card, work, `${entry.album} のジャケット`);
 
   const body = el('div', 'card-body');
   const meta = el('div', 'card-meta');
@@ -490,7 +500,7 @@ function writeWithSong(work, song) {
 
 function createGroupHeader(work, albumName, category, summary) {
   const header = el('div', 'group-header');
-  header.appendChild(createArtwork(work, `${albumName} のジャケット`));
+  appendArtwork(header, work, `${albumName} のジャケット`);
   const info = el('div', 'group-info');
   info.appendChild(el('h3', 'group-title', albumName));
   const sub = el('p', 'group-sub');
@@ -502,7 +512,7 @@ function createGroupHeader(work, albumName, category, summary) {
 
 function createSongRow({ work, song }, counts, { showWork }) {
   const row = el('article', 'song-row');
-  if (showWork) row.appendChild(createArtwork(work, `${work.name} のジャケット`));
+  if (showWork) appendArtwork(row, work, `${work.name} のジャケット`);
   const main = el('div', 'song-main');
   main.appendChild(el('h4', 'song-title', song.title));
   const sub = el('p', 'song-sub');

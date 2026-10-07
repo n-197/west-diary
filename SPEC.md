@@ -11,6 +11,11 @@
 | **PWA 版**（メイン） | リポジトリ直下（GitHub Pages で公開） | 端末のブラウザ（localStorage） | スマホのホーム画面から使う |
 | claude.ai 公開版 | `claude-page/` | claude.ai のユーザー専用領域 | 以前の版。PWA 版への引っ越し元 |
 
+PWA 版には、ジャケット画像を出さない **ジャケ写なし版**（`noart/`、URL は `…/noart/`）もある。
+- `noart/index.html` は `tools/build-noart.ps1` で `index.html` から作る（直接編集しない。`index.html` を変えたら再実行する）。`<html data-artwork="off">` で `app.js` がジャケット画像を出さず、その場所も詰める。`<base href="../">` で CSS・JS・カタログ・アイコン・`sw.js` は PWA 版と同じものを使う。
+- マニフェストだけ `noart/manifest.webmanifest`（開始 URL が `noart/`）。名前・アイコンは PWA 版と同じ。
+- 同じサイトなので、日記・配色・背景の写真は PWA 版と共通（同じ localStorage / IndexedDB）。切り替えは作る側だけで行い、使う人の設定にはない。
+
 ## 2. 技術スタック
 - **フロントエンド**: HTML5, CSS3, JavaScript (Vanilla JS)
 - **PWA**: Web App Manifest（`manifest.webmanifest`）、Service Worker（`sw.js`）
@@ -126,7 +131,7 @@
 ### 4.8. PWA
 1. `manifest.webmanifest`：名前「WEST. 音楽日記」（ホーム画面では「WEST.日記」）、`display: standalone`、アイコンは黒背景に白で「▷WEST.」（`icons/`、`tools/build-icons.ps1` で `tools/icon.html` から作る）。
 2. `sw.js`：
-   - インストール時にアプリ本体（HTML・CSS・JS（`app.js`・`theme.js`）・カタログ・マニフェスト・アイコン）を保存する。
+   - インストール時にアプリ本体（HTML・CSS・JS（`app.js`・`theme.js`）・カタログ・マニフェスト・アイコン、ジャケ写なし版のページとマニフェスト）を保存する。オフラインで `noart/` を開いたときはジャケ写なし版のページを返す。
    - 同じサイトのファイルは保存済みのものをすぐ返し、裏で取り直す（更新は次に開いたときに反映）。
    - ジャケット画像（mzstatic.com）とフォント（Google Fonts）は一度取得したら保存して使い回す。
    - 試聴の音声と外部サイトは保存しない。
