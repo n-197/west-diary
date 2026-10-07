@@ -60,9 +60,27 @@
 
 ### 3.3. 書き出しファイル（引っ越し・バックアップ）
 ```json
-{ "app": "west-diary", "version": 1, "exportedAt": "2026-10-07T10:00:00.000Z", "entries": [ ... ] }
+{
+  "app": "west-diary", "version": 2, "exportedAt": "2026-10-07T10:00:00.000Z",
+  "entries": [ ... ],
+  "settings": { "theme": { ... }, "background": "data:image/jpeg;base64,..." }
+}
 ```
-`entries` は 3.1 と同じ形。両方の版が同じ形式で書き出す。
+- `entries` は 3.1 と同じ形。`settings.theme` は 3.4 の配色、`settings.background` は背景の写真（data URL。なければ null）。
+- claude.ai 公開版は `settings` のない version 1 で書き出す。PWA 版はどちらも読み込める。
+
+### 3.4. 配色の設定（PWA 版の localStorage キー `west_diary_theme`）
+| フィールド名 | 型 | 内容 |
+| :--- | :--- | :--- |
+| `preset` | String | `default` / `mono` / `red` / `orange` / `yellow` / `green` / `blue` / `purple` / `pink` / `custom` |
+| `accent` | String | テーマカラー（`#rrggbb`。null は標準の色） |
+| `mode` | String | `auto` / `light` / `dark` |
+| `bg` | String | 背景の種類 `default` / `tint` / `color` / `gradient` / `image` |
+| `bgColor` | String | 単色の背景色 |
+| `bgGradient` | Array | グラデーションの上下 2 色 |
+| `bgFade` | Number | 写真の上に重ねる背景色の濃さ（0〜0.7） |
+
+背景の写真は IndexedDB（DB `west-diary`、ストア `files`、キー `background`）に、長い辺 1600px までの JPEG にして保存する。
 
 ## 4. 機能要件
 
@@ -108,11 +126,20 @@
 ### 4.8. PWA
 1. `manifest.webmanifest`：名前「WEST. 音楽日記」（ホーム画面では「WEST.日記」）、`display: standalone`、アイコンは黒背景に白で「▷WEST.」（`icons/`、`tools/build-icons.ps1` で `tools/icon.html` から作る）。
 2. `sw.js`：
-   - インストール時にアプリ本体（HTML・CSS・JS・カタログ・マニフェスト・アイコン）を保存する。
+   - インストール時にアプリ本体（HTML・CSS・JS（`app.js`・`theme.js`）・カタログ・マニフェスト・アイコン）を保存する。
    - 同じサイトのファイルは保存済みのものをすぐ返し、裏で取り直す（更新は次に開いたときに反映）。
    - ジャケット画像（mzstatic.com）とフォント（Google Fonts）は一度取得したら保存して使い回す。
    - 試聴の音声と外部サイトは保存しない。
    - アプリのファイルを変えて公開し直すときは `VERSION` を上げる。
+
+### 4.9. 配色・背景のカスタム（PWA 版）
+1. ヘッダー右上の ⚙ で設定パネルを開く。変更はすぐ画面に反映して保存する。「標準に戻す」で初期状態に戻す。
+2. **プリセット**: 標準、モノクロ（黒×白）、赤・オレンジ・黄・緑・青・紫・ピンク。色のプリセットは背景もテーマカラーの淡い色にする。
+3. **テーマカラー**: 好きな色を選べる。押したときの色・薄い色・ボタンの文字色（白か黒）は自動で作り、文字として使う色は背景とのコントラスト比 4.5 以上になるよう明るさを調整する。
+4. **表示モード**: 端末に合わせる / ライト / ダーク。
+5. **背景**: 標準 / テーマカラー（淡い色） / 単色 / グラデーション / 写真。写真には背景色を重ねて薄くできる。写真の上では見出しを半透明の札に乗せ、単色・グラデーションの上では見出しの文字色を自動で選ぶ。
+6. `theme.js` を `<head>` で読み込み、ページを描く前に色を当てる（一瞬元の色が見えないように）。
+7. 書き出しファイルに配色と写真を含め、読み込み時に当てる。値は形と範囲を検証してから使い、写真は `data:image/(jpeg|png|webp)` のみ受け付ける。
 
 ## 5. UI/UX 要件
 - **デザイン**: シンプルで清潔感のあるモダンデザイン。ライト / ダークモードに対応する。
