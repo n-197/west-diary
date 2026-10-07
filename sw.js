@@ -2,7 +2,7 @@
 
 // オフラインでも開けるように、アプリ本体・カタログ・ジャケット画像・フォントを端末に保存する。
 // アプリのファイルを変えて公開し直すときは VERSION を上げる。
-const VERSION = 'v4';
+const VERSION = 'v5';
 const APP_CACHE = `west-diary-app-${VERSION}`;
 const ASSET_CACHE = 'west-diary-assets';  // ジャケット画像・フォント（作品が変わらない限り使い回す）
 

@@ -8,6 +8,7 @@ const BACKUP_REMIND_DAYS = 30;
 const state = {
   catalog: [],        // WEST. の作品カタログ（catalog.json）
   catalogLoaded: false,
+  lyrics: {},         // 元の曲名 → J-Lyric.net の歌詞ページ（catalog.json の lyrics）
   entries: [],        // 日記（この端末のブラウザに保存）
   view: 'timeline',   // 'timeline' | 'group' | 'songs'
   keyword: '',        // 日記の検索語
@@ -162,6 +163,7 @@ async function loadCatalog() {
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
     state.catalog = (data.works || []).slice().sort((a, b) => a.releaseDate.localeCompare(b.releaseDate));
+    state.lyrics = data.lyrics || {};
   } catch (e) {
     console.warn('カタログの読み込みに失敗しました', e);
     state.catalog = [];
@@ -342,10 +344,15 @@ function createLink(label, href, className = 'btn btn-small') {
   return a;
 }
 
-// 歌詞は権利の都合でページに載せず、外部サイトで開く
+// 歌詞は権利の都合でページに載せず、外部サイトで開く（J-Lyric.net の歌詞ページ。載っていない曲は歌ネットの曲名検索）
 // 「〇〇 - From THE FIRST TAKE」「〇〇 (LIVE From …)」などの別バージョンは元の曲名で探す
 const baseTitle = (title) => title.replace(/\s+-\s+.*$/, '').replace(/\s*[(（][^()（）]*[)）]$/, '').trim() || title;
-const lyricsUrl = (title) => `https://www.uta-net.com/search/?Aselect=2&Bselect=3&Keyword=${encodeURIComponent(baseTitle(title))}`;
+const lyricsUrl = (title) => {
+  const base = baseTitle(title);
+  const page = state.lyrics[base];
+  return page ? `https://j-lyric.net/artist/${page}.html`
+    : `https://www.uta-net.com/search/?Aselect=2&Bselect=3&Keyword=${encodeURIComponent(base)}`;
+};
 const youtubeMusicUrl = (title) => `https://music.youtube.com/search?q=${encodeURIComponent(`WEST. ${title}`)}`;
 
 /* ---------- 試聴（iTunes の 30 秒プレビュー） ---------- */

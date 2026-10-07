@@ -210,6 +210,18 @@ a.btn-small { text-decoration: none; }
 .empty-icon { font-size: 2rem; display: block; margin-bottom: 4px; }
 .empty p { margin: 0; }
 
+/* ページ最下部のメッセージ（メンバーカラー） */
+.site-footer {
+  padding: 8px 16px 28px; text-align: center; font-size: 0.72rem; line-height: 1.7; letter-spacing: 0.04em;
+  color: var(--on-bg-muted, var(--text-muted)); text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+}
+.site-footer p { margin: 0; }
+.site-footer .slogan { font-weight: 700; }
+/* メンバー名は改行せず 1 行に収める（狭い画面では文字を小さくする） */
+.site-footer .members { white-space: nowrap; letter-spacing: 0; font-size: min(1em, calc((100vw - 32px) / 42)); }
+.c1 { color: #e60033; } .c2 { color: #f08300; } .c3 { color: #f2c200; } .c4 { color: #1fa64a; }
+.c5 { color: #1e6fe0; } .c6 { color: #9040d0; } .c7 { color: #f05aa0; }
+
 /* いちばん上へ戻るボタン（スクロールすると右下に出る） */
 .to-top {
   position: fixed; z-index: 20;
@@ -227,6 +239,13 @@ a.btn-small { text-decoration: none; }
 #bg-layer { display: none; position: fixed; inset: 0; z-index: -1; background-size: cover; background-position: center; }
 #bg-layer::after { content: ""; position: absolute; inset: 0; background: var(--bg); opacity: var(--bg-fade, 0.25); }
 .has-bg-image #bg-layer { display: block; }
+/* 写真が透けて見えるよう、枠とカードを半透明にする（重なる部分は合わせて約7割の濃さ） */
+.has-bg-image .panel {
+  background: color-mix(in srgb, var(--surface) 62%, transparent);
+  -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px);
+}
+.has-bg-image .card { background: color-mix(in srgb, var(--surface) 30%, transparent); }
+.has-bg-image .card.is-editing { background: color-mix(in srgb, var(--primary-soft) 60%, transparent); }
 /* 写真や好きな色の上でも見出しが読めるよう、ヘッダーを札のように浮かせる */
 .has-bg-image .site-header .site-heading {
   display: inline-block; padding: 8px 18px; border-radius: var(--radius);

@@ -1,7 +1,8 @@
 ﻿# WEST. の作品カタログ（作品名・発売日・収録曲・ジャケット画像）を iTunes から取得し、次の 2 つを作る。
 #   - catalog.json             … PWA 版用。ジャケットは Apple の画像 URL、曲ごとに 30 秒試聴 URL を持つ
 #   - claude-page/catalog.json … claude.ai 公開版用。ジャケット画像は claude-page/art/ に同梱する
-# 新しい作品が出たら再実行して、PWA 版（GitHub Pages）と claude-page を公開し直す。
+# 新しい作品が出たら再実行し、続けて tools\build-lyrics.ps1 で歌詞ページの対応表を入れ直してから、
+# PWA 版（GitHub Pages）と claude-page を公開し直す。
 #   powershell -ExecutionPolicy Bypass -File tools\build-catalog.ps1
 
 $ErrorActionPreference = 'Stop'
